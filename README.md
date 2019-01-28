@@ -2,8 +2,6 @@
 
 Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
 
-## Installation
-
 ## Preview
 
 ![Assist's UI elements](https://i.imgur.com/UlJ8F7m.jpg)
