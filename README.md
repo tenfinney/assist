@@ -1,21 +1,17 @@
 # assist.js
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-Takes care of onboarding your users, transaction support and smart contract analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
-=======
 Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
-=======
-Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
 
 ## Installation
 
 ### CDN
 
-<<<<<<< HEAD
-=======
+Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
+
+## Preview
+
+![Assist's UI elements](https://i.imgur.com/UlJ8F7m.jpg)
+
 ☝️ A collection of Assist's UI elements.
 
 👇 Assist's transaction notifications in action.
@@ -26,10 +22,6 @@ Takes care of onboarding your users, keeping them informed about transaction sta
 
 ### CDN
 
-<<<<<<< HEAD
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
-=======
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
 ```html
 <script src="https://s3.amazonaws.com/bnc-assist/0-2-0/assist.js"></script>
 <script src="https://s3.amazonaws.com/bnc-assist/0-2-0/assist.min.js"></script>
@@ -43,13 +35,6 @@ A JavaScript Object that is passed to the `init` function.
 
 ```javascript
 const config = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
-=======
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
   networkId: Number, // The network id of the Ethereum network your Dapp is working with (REQUIRED)
   dappId: String, // The api key supplied to you by Blocknative (REQUIRED)
   web3: Object, // The instantiated version of web3 that the Dapp is using
@@ -171,14 +156,6 @@ const assistLib = assist.init(assistConfig)
 #### Example
 
 ```javascript
-<<<<<<< HEAD
-da.onboard().then(success => {
-  // User has been successfully onboarded and is ready to transact
-}).catch(error => {
-  // The user exited onboarding before completion
-  console.log(error.msg) // Will let you know what stage of onboarding the user was up to when they exited
-})
-=======
 da.onboard()
   .then(success => {
     // User has been successfully onboarded and is ready to transact
@@ -187,7 +164,6 @@ da.onboard()
     // The user exited onboarding before completion
     console.log(error.msg) // Will let you know what stage of onboarding the user was up to when they exited
   })
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
 ```
 
 ### `Contract(contractInstance)`
@@ -282,15 +258,7 @@ state = {
 ```javascript
 da.getState().then(state => {
   if (state.validBrowser) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    console.log("valid browser")
-=======
     console.log('valid browser')
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
-=======
-    console.log('valid browser')
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
   }
 })
 ```
