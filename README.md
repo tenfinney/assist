@@ -1,15 +1,8 @@
 # assist.js
 
 Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
-<<<<<<< HEAD
 
 ## Installation
-
-### CDN
-
-Takes care of onboarding your users, keeping them informed about transaction status and comprehensive usage analytics with minimal setup. Supports web3 versions 0.20 and 1.0.
-=======
->>>>>>> parent of 1092e01... Merge pull request #5 from ryana/develop
 
 ## Preview
 
