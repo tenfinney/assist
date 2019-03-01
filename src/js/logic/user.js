@@ -1,3 +1,4 @@
+import ethers from 'ethers'
 import { state, updateState } from '../helpers/state'
 import { handleEvent } from '../helpers/events'
 import { checkValidBrowser } from '../helpers/browser'
@@ -7,11 +8,10 @@ import {
   getAccounts,
   checkUnlocked,
   getNetworkId,
-  web3Functions,
   requestLoginEnable,
-  checkForWallet,
-  configureWeb3
+  checkForWallet
 } from '../helpers/web3'
+
 import { getItem, storeItem } from '../helpers/storage'
 import { timeouts, handleError } from '../helpers/utilities'
 
@@ -25,10 +25,6 @@ export function checkUserEnvironment() {
       storeItem('_assist_newUser', 'true')
       resolve()
       return
-    }
-
-    if (!state.web3Instance) {
-      configureWeb3()
     }
 
     await checkAccountAccess()
@@ -102,10 +98,6 @@ export function prepareForTransaction(categoryCode, originalResolve) {
           return
         }
       }
-    }
-
-    if (!state.web3Instance) {
-      configureWeb3()
     }
 
     if (state.legacyWallet && !state.accessToAccounts) {
@@ -247,21 +239,16 @@ export function checkNetwork() {
 }
 
 function checkMinimumBalance() {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async resolve => {
     await checkAccountAccess()
     if (!state.accessToAccounts) {
       resolve()
     }
-    const { web3Version } = state
-    const version = web3Version && web3Version.slice(0, 3)
+
     const minimum = state.config.minimumBalance || 0
     const account = await getAccountBalance().catch(resolve)
-    const minimumBalance = await web3Functions
-      .bigNumber(version)(minimum)
-      .catch(reject)
-    const accountBalance = await web3Functions
-      .bigNumber(version)(account)
-      .catch(reject)
+    const minimumBalance = ethers.utils.bigNumberify(minimum)
+    const accountBalance = ethers.utils.bigNumberify(account)
     const sufficientBalance = accountBalance.gte(minimumBalance)
 
     updateState({

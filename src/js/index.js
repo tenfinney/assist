@@ -1,20 +1,21 @@
 import '@babel/polyfill'
 import { promisify } from 'bluebird'
+import ethers from 'ethers'
 import { state, updateState } from './helpers/state'
 import { handleEvent } from './helpers/events'
-import { legacyMethod, modernMethod } from './logic/contract-methods'
+import decorateContractMethod from './logic/contract-methods'
 import { openWebsocketConnection } from './helpers/websockets'
 import { getUserAgent } from './helpers/browser'
 import { checkUserEnvironment, prepareForTransaction } from './logic/user'
 import sendTransaction from './logic/send-transaction'
-import { configureWeb3 } from './helpers/web3'
-import { separateArgs } from './helpers/utilities'
 import { createIframe } from './helpers/iframe'
 import {
   getTransactionQueueFromStorage,
   storeTransactionQueue
 } from './helpers/storage'
 import styles from '../css/styles.css'
+import getProvider from './helpers/provider'
+import { assistLog } from './helpers/utilities'
 
 // Library Version - if changing, also need to change in package.json
 const version = '0.3.4'
@@ -41,7 +42,7 @@ function init(config) {
     updateState({ config })
   }
 
-  const { web3, dappId, mobileBlocked } = config
+  const { dappId, mobileBlocked } = config
 
   // Check that an api key has been provided to the config object
   if (!dappId) {
@@ -58,10 +59,6 @@ function init(config) {
     const errorObj = new Error('API key is required')
     errorObj.eventCode = 'initFail'
     throw errorObj
-  }
-
-  if (web3) {
-    configureWeb3(web3)
   }
 
   // Get browser info
@@ -218,21 +215,6 @@ function init(config) {
       return contractObj
     }
 
-    // Check if we have an instance of web3
-    if (!state.web3Instance) {
-      if (window.web3) {
-        configureWeb3()
-      } else {
-        const errorObj = new Error(
-          'A web3 instance is needed to decorate contract'
-        )
-        errorObj.eventCode = 'initFail'
-        throw errorObj
-      }
-    }
-
-    const { legacyWeb3 } = state
-
     const abi =
       contractObj.abi ||
       contractObj._jsonInterface ||
@@ -240,71 +222,57 @@ function init(config) {
         key => contractObj.abiModel.abi.methods[key].abiItem
       )
 
-    const modifiedContractObject = abi.reduce((originalContract, methodABI) => {
-      const { name, type } = methodABI
+    assistLog({ contractObj })
 
-      // If the method is not a function then do nothing to it
-      if (type !== 'function') {
-        return originalContract
-      }
+    const address = contractObj.address || contractObj._address
+    const provider = getProvider()
+    const signer = provider.getSigner()
+    const ethersContract = new ethers.Contract(address, abi, signer)
+    const contractKeys = Object.keys(ethersContract)
 
-      // Save the original method to a variable
-      const method = legacyWeb3
-        ? originalContract[name]
-        : originalContract.methods[name]
+    const decoratedContract = contractKeys.reduce((contract, key) => {
+      const methodABI = abi.find(method => method.name === key)
+      const method = ethersContract[key]
 
-      // Replace the methods with our decorated ones
-      if (legacyWeb3) {
-        originalContract[name] = (...args) =>
-          legacyMethod(method, methodABI, args)
+      // if not a contract method from abi then we don't do anything to it, just copy it over
+      if (!methodABI) {
+        contract[key] = ethersContract[key]
+      } else if (method) {
+        // ethers/web3.js 0.20 call and send
+        contract[key] = (...args) =>
+          decorateContractMethod(ethersContract, methodABI, args)
 
-        originalContract[name].call = async (...allArgs) => {
-          const { callback, args } = separateArgs(allArgs)
+        // web3.js 0.20 call
+        contract[key].call = (...args) =>
+          decorateContractMethod(ethersContract, methodABI, args)
 
-          const result = await promisify(method.call)(...args).catch(
-            errorObj => callback && callback(errorObj)
-          )
-          if (result) {
-            callback && callback(null, result)
-          }
+        // web3.js 0.20 send
+        contract[key].sendTransaction = (...args) =>
+          decorateContractMethod(ethersContract, methodABI, args)
 
-          handleEvent({
-            eventCode: 'contractQuery',
-            categoryCode: 'activeContract',
-            contract: {
-              methodName: name,
-              parameters: args,
-              result: JSON.stringify(result)
-            }
+        if (!contract.methods) {
+          contract.methods = {}
+        }
+
+        // web3.js 1.0 call and send
+        contract.methods = Object.assign({}, contract.methods, {
+          [key]: (...args) => ({
+            call: () => decorateContractMethod(ethersContract, methodABI, args),
+            send: (txObject = {}) =>
+              decorateContractMethod(ethersContract, methodABI, [
+                ...args,
+                txObject
+              ])
           })
-        }
-
-        originalContract[name].sendTransaction = async (...allArgs) => {
-          const { callback, txObject, args } = separateArgs(allArgs)
-
-          await sendTransaction(
-            'activeContract',
-            txObject,
-            promisify(method.sendTransaction),
-            callback,
-            method,
-            {
-              methodName: name,
-              parameters: args
-            }
-          ).catch(errorObj => callback && callback(errorObj))
-        }
-
-        originalContract[name].getData = method.getData
-      } else {
-        originalContract.methods[name] = (...args) =>
-          modernMethod(method, methodABI, args)
+        })
       }
 
-      return originalContract
-    }, contractObj)
+      return contract
+    }, Object.create(Object.getPrototypeOf(ethersContract)))
 
-    return modifiedContractObject
+    assistLog({ decoratedContract })
+
+    return decoratedContract
   }
 
   // TRANSACTION FUNCTION //
@@ -320,11 +288,6 @@ function init(config) {
       const errorObj = new Error('This network is not supported')
       errorObj.eventCode = 'initFail'
       return Promise.reject(errorObj)
-    }
-
-    // Check if we have an instance of web3
-    if (!state.web3Instance) {
-      configureWeb3()
     }
 
     // if user is on mobile, and mobile is allowed by Dapp just put the transaction through
@@ -349,15 +312,15 @@ function init(config) {
       resolve(txPromiseObj)
     })
   }
-}
 
-// GETSTATE FUNCTION //
+  // GETSTATE FUNCTION //
 
-function getState() {
-  return new Promise(async (resolve, reject) => {
-    await checkUserEnvironment().catch(reject)
-    resolve(state)
-  })
+  function getState() {
+    return new Promise(async (resolve, reject) => {
+      await checkUserEnvironment().catch(reject)
+      resolve(state)
+    })
+  }
 }
 
 export default { init }

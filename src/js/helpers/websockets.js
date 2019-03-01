@@ -114,6 +114,7 @@ export function handleSocketMessage(msg) {
           })
           break
         case 'confirmed':
+          assistLog('txConfirmed server')
           handleEvent({
             eventCode: 'txConfirmed',
             categoryCode: 'activeTransaction',

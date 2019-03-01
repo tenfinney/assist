@@ -1,11 +1,9 @@
+import ethers from 'ethers'
 import { state, updateState } from '../helpers/state'
+import getProvider from '../helpers/provider'
 import { handleEvent } from '../helpers/events'
 import { prepareForTransaction } from './user'
-import {
-  hasSufficientBalance,
-  getNonce,
-  waitForTransactionReceipt
-} from '../helpers/web3'
+import { hasSufficientBalance, getNonce } from '../helpers/web3'
 import {
   isDuplicateTransaction,
   checkTransactionQueue,
@@ -14,7 +12,8 @@ import {
   addTransactionToQueue,
   timeouts,
   extractMessageFromError,
-  handleError
+  handleError,
+  assistLog
 } from '../helpers/utilities'
 
 function inferNonce() {
@@ -33,7 +32,7 @@ function sendTransaction(
   txObject = {},
   sendTransactionMethod,
   callback,
-  contractMethod,
+  contract,
   contractEventObj
 ) {
   return new Promise(async (resolve, reject) => {
@@ -45,16 +44,20 @@ function sendTransaction(
       return
     }
 
-    // make sure that we have from address in txObject
-    if (!txObject.from) {
-      txObject.from = state.accountAddress
+    if (txObject.from) {
+      delete txObject.from
+    }
+
+    if (txObject.gasPrice) {
+      txObject.gasPrice = ethers.utils.parseUnits(txObject.gasPrice, 'wei')
     }
 
     // Get the total transaction cost and see if there is enough balance
     const { sufficientBalance, transactionParams } = await hasSufficientBalance(
       txObject,
-      contractMethod,
-      contractEventObj
+      contract,
+      contractEventObj.methodName,
+      contractEventObj.parameters
     ).catch(reject)
 
     if (!sufficientBalance) {
@@ -116,20 +119,12 @@ function sendTransaction(
       )
     }
 
-    let txPromise
-
-    if (state.legacyWeb3) {
-      if (contractEventObj) {
-        txPromise = sendTransactionMethod(
+    const txPromise = contract
+      ? contract[contractEventObj.methodName](
           ...contractEventObj.parameters,
           txObject
         )
-      } else {
-        txPromise = sendTransactionMethod(txObject)
-      }
-    } else {
-      txPromise = sendTransactionMethod(txObject)
-    }
+      : sendTransactionMethod(txObject)
 
     resolve({ txPromise })
 
@@ -178,59 +173,96 @@ function sendTransaction(
       }
     }, timeouts.txConfirmReminder)
 
-    if (state.legacyWeb3) {
-      txPromise
-        .then(async txHash => {
-          confirmed = handleTxHash(
-            txHash,
-            { transactionParams, categoryCode, contractEventObj },
-            reject,
-            callback
-          )
-          waitForTransactionReceipt(txHash).then(receipt => {
-            handleTxReceipt(
-              receipt,
-              { transactionParams, categoryCode, contractEventObj },
-              reject,
-              callback
-            )
-          })
-        })
-        .catch(async errorObj => {
-          rejected = handleTxError(
-            errorObj,
-            { transactionParams, categoryCode, contractEventObj },
-            reject,
-            callback
-          )
-        })
-    } else {
-      txPromise
-        .on('transactionHash', async txHash => {
-          confirmed = handleTxHash(
-            txHash,
-            { transactionParams, categoryCode, contractEventObj },
-            reject,
-            callback
-          )
-        })
-        .on('receipt', async receipt => {
-          handleTxReceipt(
-            receipt,
-            { transactionParams, categoryCode, contractEventObj },
-            reject,
-            callback
-          )
-        })
-        .on('error', async errorObj => {
-          rejected = handleTxError(
-            errorObj,
-            { transactionParams, categoryCode, contractEventObj },
-            reject,
-            callback
-          )
-        })
-    }
+    assistLog({ txPromise })
+
+    const tx = await txPromise.catch(async errorObj => {
+      assistLog({ errorObj })
+      rejected = handleTxError(
+        errorObj,
+        { transactionParams, categoryCode, contractEventObj },
+        reject,
+        callback
+      )
+    })
+    assistLog({ tx })
+
+    confirmed = handleTxHash(
+      tx.hash,
+      { transactionParams, categoryCode, contractEventObj },
+      reject,
+      callback
+    )
+
+    const provider = getProvider()
+
+    assistLog({ provider })
+
+    const txReceipt = await tx.wait()
+    assistLog('txConfirmed client')
+
+    assistLog('gasUsed: ')
+    assistLog(txReceipt.gasUsed.toString())
+
+    handleTxReceipt(
+      txReceipt,
+      { transactionParams, categoryCode, contractEventObj },
+      reject,
+      callback
+    )
+
+    // if (state.legacyWeb3) {
+    //   txPromise
+    //     .then(async txHash => {
+    //       confirmed = handleTxHash(
+    //         txHash,
+    //         { transactionParams, categoryCode, contractEventObj },
+    //         reject,
+    //         callback
+    //       )
+    //       waitForTransactionReceipt(txHash).then(receipt => {
+    //         handleTxReceipt(
+    //           receipt,
+    //           { transactionParams, categoryCode, contractEventObj },
+    //           reject,
+    //           callback
+    //         )
+    //       })
+    //     })
+    //     .catch(async errorObj => {
+    //       rejected = handleTxError(
+    //         errorObj,
+    //         { transactionParams, categoryCode, contractEventObj },
+    //         reject,
+    //         callback
+    //       )
+    //     })
+    // } else {
+    //   txPromise
+    //     .on('transactionHash', async txHash => {
+    //       confirmed = handleTxHash(
+    //         txHash,
+    //         { transactionParams, categoryCode, contractEventObj },
+    //         reject,
+    //         callback
+    //       )
+    //     })
+    //     .on('receipt', async receipt => {
+    //       handleTxReceipt(
+    //         receipt,
+    //         { transactionParams, categoryCode, contractEventObj },
+    //         reject,
+    //         callback
+    //       )
+    //     })
+    //     .on('error', async errorObj => {
+    //       rejected = handleTxError(
+    //         errorObj,
+    //         { transactionParams, categoryCode, contractEventObj },
+    //         reject,
+    //         callback
+    //       )
+    //     })
+    // }
   })
 }
 
