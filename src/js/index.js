@@ -15,7 +15,6 @@ import {
 } from './helpers/storage'
 import styles from '../css/styles.css'
 import getProvider from './helpers/provider'
-import { assistLog } from './helpers/utilities'
 
 // Library Version - if changing, also need to change in package.json
 const version = '0.3.4'
@@ -218,11 +217,11 @@ function init(config) {
     const abi =
       contractObj.abi ||
       contractObj._jsonInterface ||
-      Object.keys(contractObj.abiModel.abi.methods).map(
-        key => contractObj.abiModel.abi.methods[key].abiItem
-      )
-
-    assistLog({ contractObj })
+      (contractObj.abiModel &&
+        Object.keys(contractObj.abiModel.abi.methods).map(
+          key => contractObj.abiModel.abi.methods[key].abiItem
+        )) ||
+      (contractObj.interface && contractObj.interface.abi)
 
     const address = contractObj.address || contractObj._address
     const provider = getProvider()
@@ -269,8 +268,6 @@ function init(config) {
 
       return contract
     }, Object.create(Object.getPrototypeOf(ethersContract)))
-
-    assistLog({ decoratedContract })
 
     return decoratedContract
   }

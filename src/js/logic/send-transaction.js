@@ -1,6 +1,5 @@
 import ethers from 'ethers'
 import { state, updateState } from '../helpers/state'
-import getProvider from '../helpers/provider'
 import { handleEvent } from '../helpers/events'
 import { prepareForTransaction } from './user'
 import { hasSufficientBalance, getNonce } from '../helpers/web3'
@@ -12,8 +11,7 @@ import {
   addTransactionToQueue,
   timeouts,
   extractMessageFromError,
-  handleError,
-  assistLog
+  handleError
 } from '../helpers/utilities'
 
 function inferNonce() {
@@ -50,6 +48,10 @@ function sendTransaction(
 
     if (txObject.gasPrice) {
       txObject.gasPrice = ethers.utils.parseUnits(txObject.gasPrice, 'wei')
+    }
+
+    if (txObject.value) {
+      txObject.value = ethers.utils.parseUnits(txObject.value, 'wei')
     }
 
     // Get the total transaction cost and see if there is enough balance
@@ -173,10 +175,7 @@ function sendTransaction(
       }
     }, timeouts.txConfirmReminder)
 
-    assistLog({ txPromise })
-
     const tx = await txPromise.catch(async errorObj => {
-      assistLog({ errorObj })
       rejected = handleTxError(
         errorObj,
         { transactionParams, categoryCode, contractEventObj },
@@ -184,7 +183,6 @@ function sendTransaction(
         callback
       )
     })
-    assistLog({ tx })
 
     confirmed = handleTxHash(
       tx.hash,
@@ -193,15 +191,7 @@ function sendTransaction(
       callback
     )
 
-    const provider = getProvider()
-
-    assistLog({ provider })
-
     const txReceipt = await tx.wait()
-    assistLog('txConfirmed client')
-
-    assistLog('gasUsed: ')
-    assistLog(txReceipt.gasUsed.toString())
 
     handleTxReceipt(
       txReceipt,
@@ -209,60 +199,6 @@ function sendTransaction(
       reject,
       callback
     )
-
-    // if (state.legacyWeb3) {
-    //   txPromise
-    //     .then(async txHash => {
-    //       confirmed = handleTxHash(
-    //         txHash,
-    //         { transactionParams, categoryCode, contractEventObj },
-    //         reject,
-    //         callback
-    //       )
-    //       waitForTransactionReceipt(txHash).then(receipt => {
-    //         handleTxReceipt(
-    //           receipt,
-    //           { transactionParams, categoryCode, contractEventObj },
-    //           reject,
-    //           callback
-    //         )
-    //       })
-    //     })
-    //     .catch(async errorObj => {
-    //       rejected = handleTxError(
-    //         errorObj,
-    //         { transactionParams, categoryCode, contractEventObj },
-    //         reject,
-    //         callback
-    //       )
-    //     })
-    // } else {
-    //   txPromise
-    //     .on('transactionHash', async txHash => {
-    //       confirmed = handleTxHash(
-    //         txHash,
-    //         { transactionParams, categoryCode, contractEventObj },
-    //         reject,
-    //         callback
-    //       )
-    //     })
-    //     .on('receipt', async receipt => {
-    //       handleTxReceipt(
-    //         receipt,
-    //         { transactionParams, categoryCode, contractEventObj },
-    //         reject,
-    //         callback
-    //       )
-    //     })
-    //     .on('error', async errorObj => {
-    //       rejected = handleTxError(
-    //         errorObj,
-    //         { transactionParams, categoryCode, contractEventObj },
-    //         reject,
-    //         callback
-    //       )
-    //     })
-    // }
   })
 }
 

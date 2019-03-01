@@ -1,18 +1,15 @@
 import { state } from '../helpers/state'
 import { handleEvent } from '../helpers/events'
 import sendTransaction from './send-transaction'
-import { separateArgs, timeouts, assistLog } from '../helpers/utilities'
+import { separateArgs, timeouts } from '../helpers/utilities'
 import { checkNetwork } from './user'
 import { addOnboardWarning } from '../views/dom'
 
 export default function decorateContractMethod(contract, methodABI, allArgs) {
   return new Promise(async (resolve, reject) => {
     const { name, constant } = methodABI
-    assistLog({ allArgs })
-
     const { args, txObject = {}, callback } = separateArgs(allArgs)
-    assistLog({ args })
-    assistLog({ txObject })
+
     if (state.mobileDevice && state.config.mobileBlocked) {
       handleEvent(
         {
@@ -29,8 +26,6 @@ export default function decorateContractMethod(contract, methodABI, allArgs) {
       )
     }
 
-    assistLog({ methodABI })
-
     if (constant) {
       const txPromise = contract[name](...args, txObject)
 
@@ -45,8 +40,8 @@ export default function decorateContractMethod(contract, methodABI, allArgs) {
               result: JSON.stringify(result)
             }
           })
+
           callback && callback(null, result)
-          assistLog({ result })
           resolve(result)
         })
         .catch(() => {

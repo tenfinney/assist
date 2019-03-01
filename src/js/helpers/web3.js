@@ -3,7 +3,7 @@ import ethers from 'ethers'
 
 import getProvider from './provider'
 import { state, updateState } from './state'
-import { handleError, timeouts, assistLog } from './utilities'
+import { handleError, timeouts } from './utilities'
 
 const provider = getProvider()
 
@@ -55,34 +55,26 @@ export function hasSufficientBalance(
   methodArgs
 ) {
   return new Promise(async (resolve, reject) => {
-    assistLog('checking has sufficient balance')
     const transactionValue = ethers.utils.bigNumberify(txObject.value || '0')
     const gasPrice = ethers.utils.bigNumberify(txObject.gasPrice || '0')
-    assistLog({ methodArgs })
-    assistLog({ contractMethodName })
+
     const gas = contract
-      ? await contract.estimate[contractMethodName](...methodArgs)
+      ? await contract.estimate[contractMethodName](
+          ...methodArgs,
+          txObject
+        ).catch(reject)
       : await provider.getSigner().estimateGas(txObject)
 
-    assistLog('gasEstimate: ')
-    assistLog(gas.toString())
-
     const transactionFee = gas.mul(gasPrice)
-    assistLog('transaction fee estimate')
-    assistLog(transactionFee.toString())
     const buffer = transactionFee.div(ethers.utils.bigNumberify('10'))
 
     const totalTransactionCost = transactionFee
       .add(transactionValue)
       .add(buffer)
 
-    assistLog({ totalTransactionCost })
-
     const accountBalance = await getAccountBalance().catch(
       handleError('web3', reject)
     )
-
-    assistLog({ accountBalance })
 
     const sufficientBalance = accountBalance.gt(totalTransactionCost)
 
