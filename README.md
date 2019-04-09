@@ -168,6 +168,9 @@ var config = {
       srcset: String // Image URL(s) for complete onboard modal
     }
   }
+  style: {
+    notificationsPosition: String // Defines which corner transaction notifications will be positioned. Options: 'topLeft', 'topRight', 'bottomRight', 'bottomLeft'. ['bottomRight']
+  }
 }
 ```
 
