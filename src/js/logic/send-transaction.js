@@ -18,7 +18,8 @@ import {
 import {
   timeouts,
   extractMessageFromError,
-  createTransactionId
+  createTransactionId,
+  handleError
 } from '../helpers/utilities'
 
 function sendTransaction(
@@ -32,7 +33,9 @@ function sendTransaction(
 ) {
   return new Promise(async (resolve, reject) => {
     // Make sure user is onboarded and ready to transact
-    await prepareForTransaction('activePreflight').catch(reject)
+    await prepareForTransaction('activePreflight').catch(
+      handleError({ resolve, reject, callback })
+    )
 
     // make sure that we have from address in txObject
     if (!txOptions.from) {
@@ -45,7 +48,7 @@ function sendTransaction(
       txOptions,
       contractMethod,
       contractEventObj
-    ).catch(reject)
+    )
 
     const transactionEventObj = {
       id: transactionId,
@@ -56,11 +59,9 @@ function sendTransaction(
       from: txOptions.from
     }
 
-    const sufficientBalance = await hasSufficientBalance(
-      transactionParams
-    ).catch(reject)
+    const sufficientBalance = await hasSufficientBalance(transactionParams)
 
-    if (!sufficientBalance) {
+    if (sufficientBalance === false) {
       handleEvent({
         eventCode: 'nsfFail',
         categoryCode: 'activePreflight',
@@ -74,11 +75,13 @@ function sendTransaction(
           minimum: state.config.minimumBalance
         }
       })
+
       const errorObj = new Error(
         'User has insufficient funds to complete transaction'
       )
       errorObj.eventCode = 'nsfFail'
-      reject(errorObj)
+
+      handleError({ resolve, reject, callback })(errorObj)
       return
     }
 
@@ -130,8 +133,6 @@ function sendTransaction(
     } else {
       txPromise = sendTransactionMethod(txOptions)
     }
-
-    resolve(txPromise)
 
     handleEvent({
       eventCode: 'txRequest',
@@ -186,6 +187,7 @@ function sendTransaction(
         .catch(async errorObj => {
           onTxError(transactionId, errorObj, categoryCode, inlineCustomMsgs)
           callback && callback(errorObj)
+          handleError({ resolve, reject, callback })(errorObj)
         })
     } else {
       txPromise
@@ -199,6 +201,7 @@ function sendTransaction(
         .on('error', async errorObj => {
           onTxError(transactionId, errorObj, categoryCode, inlineCustomMsgs)
           callback && callback(errorObj)
+          handleError({ resolve, reject, callback })(errorObj)
         })
     }
   })
