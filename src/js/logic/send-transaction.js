@@ -287,6 +287,7 @@ async function onTxReceipt(id, categoryCode) {
 
 function onTxError(id, error, categoryCode) {
   const { message } = error
+
   let errorMsg
   try {
     errorMsg = extractMessageFromError(message)
@@ -295,10 +296,11 @@ function onTxError(id, error, categoryCode) {
   }
 
   const txObj = updateTransactionInQueue(id, { status: 'rejected' })
+  const eventCode =
+    errorMsg === 'transaction underpriced' ? 'txUnderpriced' : 'txSendFail'
 
   handleEvent({
-    eventCode:
-      errorMsg === 'transaction underpriced' ? 'txUnderpriced' : 'txSendFail',
+    eventCode,
     categoryCode,
     transaction: txObj.transaction,
     contract: txObj.contract,
