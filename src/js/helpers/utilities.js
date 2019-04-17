@@ -137,6 +137,7 @@ export function eventCodeToType(eventCode) {
     case 'txRequest':
     case 'txPending':
     case 'txSent':
+    case 'signRequest':
       return 'progress'
     case 'txSendFail':
     case 'txStall':
@@ -145,9 +146,12 @@ export function eventCodeToType(eventCode) {
     case 'txRepeat':
     case 'txAwaitingApproval':
     case 'txConfirmReminder':
+    case 'signConfirmReminder':
+    case 'signReject':
       return 'failed'
     case 'txConfirmed':
     case 'txConfirmedClient':
+    case 'signConfirm':
       return 'complete'
     default:
       return undefined
@@ -202,6 +206,7 @@ export const timeouts = {
   checkSocketConnection: 250,
   waitForResponse: 100,
   txConfirmReminder: 20000,
+  signConfirmReminder: 20000,
   txStall: 30000,
   changeUI: 305,
   localhostNetworkCheck: 300,

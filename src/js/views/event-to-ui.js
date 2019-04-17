@@ -81,6 +81,12 @@ const eventToUI = {
     txConfirmedClient: notificationsUI,
     txStall: notificationsUI,
     txFailed: notificationsUI
+  },
+  activeSign: {
+    signRequest: notificationsUI,
+    signConfirm: notificationsUI,
+    signReject: notificationsUI,
+    signConfirmReminder: notificationsUI
   }
 }
 
@@ -170,6 +176,7 @@ function notificationsUI({
     eventCode === 'txPending' ||
     eventCode === 'txSent' ||
     eventCode === 'txStall'
+
   const showTime =
     hasTimer || eventCode === 'txConfirmed' || eventCode === 'txFailed'
 

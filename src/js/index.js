@@ -12,6 +12,7 @@ import { openWebsocketConnection } from './helpers/websockets'
 import { getUserAgent } from './helpers/browser'
 import { checkUserEnvironment, prepareForTransaction } from './logic/user'
 import sendTransaction from './logic/send-transaction'
+import signMessage from './logic/sign-message'
 import { configureWeb3 } from './helpers/web3'
 import { getOverloadedMethodKeys } from './helpers/utilities'
 import { createIframe } from './helpers/iframe'
@@ -97,6 +98,7 @@ function init(config) {
     onboard,
     Contract,
     Transaction,
+    Sign,
     getState
   }
 
@@ -442,6 +444,46 @@ function init(config) {
       inlineCustomMsgs
     )
   }
+}
+
+function Sign(message, callback, inlineCustomMsgs) {
+  const {
+    validApiKey,
+    supportedNetwork,
+    web3Instance,
+    mobileDevice,
+    config: { mobileBlocked },
+    accountAddress,
+    legacyWeb3
+  } = state
+
+  if (!validApiKey) {
+    const errorObj = new Error('Your api key is not valid')
+    errorObj.eventCode = 'initFail'
+
+    throw errorObj
+  }
+
+  if (!supportedNetwork) {
+    const errorObj = new Error('This network is not supported')
+    errorObj.eventCode = 'initFail'
+
+    throw errorObj
+  }
+
+  // Check if we have an instance of web3
+  if (!web3Instance) {
+    configureWeb3()
+  }
+
+  // if user is on mobile, and mobile is allowed by Dapp just run sign message function
+  if (mobileDevice && !mobileBlocked) {
+    return legacyWeb3
+      ? web3Instance.eth.sign(accountAddress, message, callback)
+      : web3Instance.eth.sign(message, accountAddress, callback)
+  }
+
+  return signMessage(message, accountAddress, inlineCustomMsgs, callback)
 }
 
 // GETSTATE FUNCTION //
