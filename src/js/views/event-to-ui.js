@@ -162,6 +162,7 @@ const eventCodesNoRepeat = ['nsfFail', 'txSendFail', 'txUnderPriced']
 function notificationsUI({
   transaction = {},
   contract = {},
+  messageToSign,
   inlineCustomMsgs,
   eventCode
 }) {
@@ -169,8 +170,11 @@ function notificationsUI({
   const type = eventCodeToType(eventCode)
   const timeStamp = formatTime(Date.now())
   const message =
-    getCustomTxMsg(eventCode, { transaction, contract }, inlineCustomMsgs) ||
-    transactionMsgs[eventCode]({ transaction, contract })
+    getCustomTxMsg(
+      eventCode,
+      { transaction, contract, messageToSign },
+      inlineCustomMsgs
+    ) || transactionMsgs[eventCode]({ transaction, contract, messageToSign })
 
   const hasTimer =
     eventCode === 'txPending' ||

@@ -262,9 +262,10 @@ export const transactionMsgs = {
     'Please confirm your transaction to continue (hint: the transaction window may be behind your browser)',
   txConfirmed: ({ transaction }) =>
     `Your transaction ID: ${transaction.nonce} has succeeded`,
-  signRequest: ({ message }) => `Signature required for message: ${message}`,
-  signConfirm: ({ message }) =>
-    `Message: ${message} has been successfully signed`,
+  signRequest: ({ messageToSign }) =>
+    `Signature required for message: ${messageToSign}`,
+  signConfirm: ({ messageToSign }) =>
+    `Message: ${messageToSign} has been successfully signed`,
   signReject: () => `Signature rejected`,
   signConfirmReminder: () =>
     `Please sign message to continue (hint: the sign window may be behind your browser)`

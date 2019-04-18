@@ -11,7 +11,7 @@ function signMessage(message, address, inlineCustomMsgs, callback) {
     handleEvent({
       eventCode: 'signRequest',
       categoryCode: 'activeSign',
-      message,
+      messageToSign: message,
       inlineCustomMsgs
     })
 
@@ -26,10 +26,12 @@ function signMessage(message, address, inlineCustomMsgs, callback) {
         }
       )
     } else {
-      result = await web3Instance.eth.sign(message, address).catch(error => {
-        onSignError(error, inlineCustomMsgs)
-        handleError({ resolve, reject, callback })(error)
-      })
+      result = await web3Instance.eth
+        .sign(message, address, '')
+        .catch(error => {
+          onSignError(error, inlineCustomMsgs)
+          handleError({ resolve, reject, callback })(error)
+        })
     }
 
     setTimeout(() => {
@@ -37,7 +39,7 @@ function signMessage(message, address, inlineCustomMsgs, callback) {
         handleEvent({
           eventCode: 'signConfirmReminder',
           categoryCode: 'activeSign',
-          message,
+          messageToSign: message,
           inlineCustomMsgs
         })
       }
@@ -50,6 +52,7 @@ function signMessage(message, address, inlineCustomMsgs, callback) {
       handleEvent({
         eventCode: 'signConfirm',
         categoryCode: 'activeSign',
+        messageToSign: message,
         inlineCustomMsgs,
         result
       })
