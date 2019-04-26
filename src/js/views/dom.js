@@ -503,7 +503,7 @@ export function setNotificationsHeight() {
   }
 
   const notificationsContainer = getById('blocknative-notifications')
-  const toolTipBuffer = !tooBig ? 50 : 0
+  const toolTipBuffer = !tooBig && !state.mobileDevice ? 50 : 0
 
   resizeIframe({
     height: notificationsContainer.clientHeight + toolTipBuffer,
@@ -529,10 +529,9 @@ export function handleTouchStart(movementReference) {
 
 export function handleTouchMove(notification, movementReference) {
   return e => {
-    const { startY, translateY, startTime } = movementReference
+    const { startY, translateY } = movementReference
     const touch = e.changedTouches[0]
     const distance = touch.pageY - startY
-    const elapsedTime = Date.now() - startTime
 
     const newTranslateY = distance + translateY
 
@@ -541,27 +540,23 @@ export function handleTouchMove(notification, movementReference) {
       movementReference.translateY = translateY + distance
     }
 
-    const validSwipe = elapsedTime <= timeouts.swipeTime && distance >= 40
-
-    if (validSwipe) {
-      removeNotification(notification)
-    }
-
     e.preventDefault()
   }
 }
 
-export function handleTouchEnd() {
+export function handleTouchEnd(notification, movementReference) {
   return e => {
-    // const { startY, startTime } = movementReference
-    // const touch = e.changedTouches[0]
-    // const distance = touch.pageY - startY
-    // const elapsedTime = Date.now() - startTime
-    // const validSwipe = elapsedTime <= timeouts.swipeTime && distance >= 30
-    // if (!validSwipe) {
-    //   notification.style.transform = 'translateY(0)'
-    //   movementReference.translateY = 0
-    // }
-    // e.preventDefault()
+    const { startY, startTime } = movementReference
+    const touch = e.changedTouches[0]
+    const distance = touch.pageY - startY
+    const elapsedTime = Date.now() - startTime
+    const validSwipe = elapsedTime <= timeouts.swipeTime && distance >= 30
+    if (!validSwipe) {
+      notification.style.transform = 'translateY(0)'
+      movementReference.translateY = 0
+    } else {
+      removeNotification(notification)
+    }
+    e.preventDefault()
   }
 }

@@ -95,6 +95,7 @@ function init(config) {
     onboard,
     Contract,
     Transaction,
+    sendSignedTransaction,
     getState
   }
 
@@ -206,24 +207,6 @@ function init(config) {
       errorObj.eventCode = 'initFail'
       return Promise.reject(errorObj)
     }
-
-    // If user is on mobile, warn that it isn't supported
-    // if (state.mobileDevice) {
-    //   return new Promise((resolve, reject) => {
-    //     handleEvent(
-    //       { eventCode: 'mobileBlocked', categoryCode: 'onboard' },
-    //       {
-    //         onClose: () => {
-    //           const errorObj = new Error('User is on a mobile device')
-    //           errorObj.eventCode = 'mobileBlocked'
-    //           reject(errorObj)
-    //         }
-    //       }
-    //     )
-
-    //     updateState({ validBrowser: false })
-    //   })
-    // }
 
     return new Promise(async (resolve, reject) => {
       storeItem('onboarding', 'true')
@@ -446,6 +429,39 @@ function init(config) {
       inlineCustomMsgs
     )
   }
+}
+
+function sendSignedTransaction(signedData, callback, inlineCustomMsgs) {
+  if (!state.validApiKey) {
+    const errorObj = new Error('Your api key is not valid')
+    errorObj.eventCode = 'initFail'
+
+    throw errorObj
+  }
+
+  if (!state.supportedNetwork) {
+    const errorObj = new Error('This network is not supported')
+    errorObj.eventCode = 'initFail'
+
+    throw errorObj
+  }
+
+  // Check if we have an instance of web3
+  if (!state.web3Instance) {
+    configureWeb3()
+  }
+
+  const sendMethod = state.legacyWeb3
+    ? promisify(state.web3Instance.eth.sendSignedTransaction)
+    : state.web3Instance.eth.sendSignedTransaction
+
+  return sendTransaction(
+    'activeTransaction',
+    signedData,
+    sendMethod,
+    callback,
+    inlineCustomMsgs
+  )
 }
 
 // GETSTATE FUNCTION //
