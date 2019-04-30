@@ -34,9 +34,9 @@ function sendTransaction(
 ) {
   return new Promise(async (resolve, reject) => {
     // Make sure user is onboarded and ready to transact
-    await prepareForTransaction('activePreflight').catch(
-      handleError({ resolve, reject, callback })
-    )
+    // await prepareForTransaction('activePreflight').catch(
+    //   handleError({ resolve, reject, callback })
+    // )
 
     // make sure that we have from address in txOptions
     if (!txOptions.from) {
@@ -60,31 +60,31 @@ function sendTransaction(
       from: txOptions.from
     }
 
-    const sufficientBalance = await hasSufficientBalance(transactionParams)
+    // const sufficientBalance = await hasSufficientBalance(transactionParams)
 
-    if (sufficientBalance === false) {
-      handleEvent({
-        eventCode: 'nsfFail',
-        categoryCode: 'activePreflight',
-        transaction: transactionEventObj,
-        contract: contractEventObj,
-        inlineCustomMsgs,
-        wallet: {
-          provider: state.currentProvider,
-          address: state.accountAddress,
-          balance: state.accountBalance,
-          minimum: state.config.minimumBalance
-        }
-      })
+    // if (sufficientBalance === false) {
+    //   handleEvent({
+    //     eventCode: 'nsfFail',
+    //     categoryCode: 'activePreflight',
+    //     transaction: transactionEventObj,
+    //     contract: contractEventObj,
+    //     inlineCustomMsgs,
+    //     wallet: {
+    //       provider: state.currentProvider,
+    //       address: state.accountAddress,
+    //       balance: state.accountBalance,
+    //       minimum: state.config.minimumBalance
+    //     }
+    //   })
 
-      const errorObj = new Error(
-        'User has insufficient funds to complete transaction'
-      )
-      errorObj.eventCode = 'nsfFail'
+    //   const errorObj = new Error(
+    //     'User has insufficient funds to complete transaction'
+    //   )
+    //   errorObj.eventCode = 'nsfFail'
 
-      handleError({ resolve, reject, callback })(errorObj)
-      return
-    }
+    //   handleError({ resolve, reject, callback })(errorObj)
+    //   return
+    // }
 
     const duplicateTransaction = isDuplicateTransaction(
       transactionEventObj,
