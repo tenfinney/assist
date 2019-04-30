@@ -239,7 +239,9 @@ function notificationsUI({
       'li',
       `bn-notification bn-${type} bn-${eventCode} bn-${id} ${
         state.mobileDevice
-          ? 'bn-top-border'
+          ? position.includes('top')
+            ? 'bn-bottom-border'
+            : 'bn-top-border'
           : position.includes('Left')
           ? 'bn-right-border'
           : ''
@@ -308,6 +310,14 @@ function notificationsUI({
     intervalId && clearInterval(intervalId)
     removeNotification(notification)
     setTimeout(setNotificationsHeight, timeouts.changeUI)
+  }
+
+  if (state.mobileDevice) {
+    dismissButton.addEventListener('touchstart', () => {
+      intervalId && clearInterval(intervalId)
+      removeNotification(notification)
+      setTimeout(setNotificationsHeight, timeouts.changeUI)
+    })
   }
 
   if (type === 'complete') {

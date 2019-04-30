@@ -91,6 +91,10 @@ export const web3Functions = {
 export function configureWeb3(web3) {
   if (!web3) {
     web3 = window.web3 // eslint-disable-line prefer-destructuring
+    if (!web3) {
+      alert('a web3 enabled browser is needed to use this dapp')
+      return
+    }
   }
 
   // If web3 has been prefaced with the default property, re-assign it
@@ -215,7 +219,11 @@ export function getTransactionParams(
   })
 }
 
-export function hasSufficientBalance({ value = 0, gas = 0, gasPrice = 0 }) {
+export async function hasSufficientBalance({
+  value = 0,
+  gas = 0,
+  gasPrice = 0
+}) {
   return new Promise(async resolve => {
     const version = state.web3Version && state.web3Version.slice(0, 3)
 

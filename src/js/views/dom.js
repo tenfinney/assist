@@ -309,6 +309,9 @@ export function getAllByQuery(query) {
 }
 
 export function createTransactionBranding() {
+  const position =
+    (state.config.style && state.config.style.notificationsPosition) || ''
+
   const blockNativeBrand = createElement(
     'a',
     null,
@@ -317,9 +320,12 @@ export function createTransactionBranding() {
   )
   blockNativeBrand.href = 'https://www.blocknative.com/'
   blockNativeBrand.target = '_blank'
-  const position =
-    (state.config.style && state.config.style.notificationsPosition) || ''
-  blockNativeBrand.style.float = position.includes('Left') ? 'initial' : 'right'
+  blockNativeBrand.style['align-self'] = position.includes('Left')
+    ? 'flex-start'
+    : 'flex-end'
+  blockNativeBrand.style.margin = position.includes('top')
+    ? '10px 10px'
+    : '0 10px'
 
   return blockNativeBrand
 }
@@ -416,6 +422,10 @@ function getPolarity() {
   const position =
     (state.config.style && state.config.style.notificationsPosition) || ''
 
+  if (state.mobileDevice) {
+    return position.includes('top') ? '-' : ''
+  }
+
   return position.includes('Left') ? '-' : ''
 }
 
@@ -492,8 +502,9 @@ export function removeContainer() {
 export function setNotificationsHeight() {
   const scrollContainer = getByQuery('.bn-notifications-scroll')
   const maxHeight = window.innerHeight
-  const brandingHeight = getById('bn-transaction-branding').clientHeight + 26
-  const widgetHeight = scrollContainer.scrollHeight + brandingHeight
+  const branding = getById('bn-transaction-branding')
+  const brandingHeight = branding ? branding.clientHeight + 26 : 0
+  const widgetHeight = scrollContainer.clientHeight + brandingHeight
 
   const tooBig = widgetHeight > maxHeight
 
@@ -533,12 +544,20 @@ export function handleTouchMove(notification, movementReference) {
     const { startY, translateY } = movementReference
     const touch = e.changedTouches[0]
     const distance = touch.pageY - startY
-
     const newTranslateY = distance + translateY
+    const position =
+      (state.config.style && state.config.style.notificationsPosition) || ''
 
-    if (newTranslateY < 30 && newTranslateY >= 0) {
-      notification.style.transform = `translateY(${newTranslateY}px)`
-      movementReference.translateY = translateY + distance
+    if (position.includes('top')) {
+      if (newTranslateY > -40 && newTranslateY <= 0) {
+        notification.style.transform = `translateY(${newTranslateY}px)`
+        movementReference.translateY = newTranslateY
+      }
+    } else {
+      if (newTranslateY < 40 && newTranslateY >= 0) {
+        notification.style.transform = `translateY(${newTranslateY}px)`
+        movementReference.translateY = translateY + distance
+      }
     }
 
     e.preventDefault()
@@ -551,11 +570,19 @@ export function handleTouchEnd(notification, movementReference) {
     const touch = e.changedTouches[0]
     const distance = touch.pageY - startY
     const elapsedTime = Date.now() - startTime
-    const validSwipe = elapsedTime <= timeouts.swipeTime && distance >= 30
+    const topNotification =
+      state.config.style &&
+      state.config.style.notificationsPosition &&
+      state.config.style.notificationsPosition.includes('top')
+    const validDistance = topNotification ? distance <= -40 : distance >= 40
+    const validSwipe = elapsedTime <= timeouts.swipeTime && validDistance
     if (!validSwipe) {
       notification.style.transform = 'translateY(0)'
       movementReference.translateY = 0
     } else {
+      notification.style.transform = `translateY(${
+        topNotification ? '-150px' : '150px'
+      })`
       removeNotification(notification)
     }
     e.preventDefault()

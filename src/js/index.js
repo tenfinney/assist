@@ -410,10 +410,10 @@ function init(config) {
       configureWeb3()
     }
 
-    // if user is on mobile, and mobile is allowed by Dapp just put the transaction through
-    if (state.mobileDevice && !state.config.mobileBlocked) {
-      return state.web3Instance.eth.sendTransaction(txObject, callback)
-    }
+    // // if user is on mobile, and mobile is allowed by Dapp just put the transaction through
+    // if (state.mobileDevice && !state.config.mobileBlocked) {
+    //   return state.web3Instance.eth.sendTransaction(txObject, callback)
+    // }
 
     const sendMethod = state.legacyWeb3
       ? promisify(state.web3Instance.eth.sendTransaction)
