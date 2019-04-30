@@ -411,6 +411,37 @@ assistInstance.getState()
   })
 ```
 
+### `notify()`
+
+Trigger a custom UI notification
+
+#### Parameters
+
+`eventCode` - `String`: One of: ['success', 'pending', 'error'] (**Required**)
+
+`message` - `String`: The message to display in the notification (**Required**)
+
+`customTimeout` - `Number`: Specify how many ms the notification should exist. Set to -1 for no timeout. 
+
+customTimeout defaults: { success: 2000, pending: 5000, error: 5000 }
+
+#### Returns
+
+`Function`
+
+- a function that when called will dismiss the notification
+
+#### Example
+
+```javascript
+// Display a success notification for 1500ms
+assistInstance.notify('success', 'Operation was a success!', 1500);
+
+// Display a pending notification and dismiss it after 10000ms using the returned function
+const dismiss = assistInstance.notify('pending', 'Loading data...', -1);
+setTimeout(dismiss, 10000);
+```
+
 ## Contribute
 
 ### Installing Dependencies

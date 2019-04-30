@@ -1,9 +1,9 @@
 import '@babel/polyfill'
 import { promisify } from 'bluebird'
-import assistStyles from 'css/styles.css'
 
 import { state, updateState } from './helpers/state'
 import { handleEvent } from './helpers/events'
+import notify from './logic/user-initiated-notify'
 import {
   legacyCall,
   legacySend,
@@ -96,8 +96,8 @@ function init(config) {
     onboard,
     Contract,
     Transaction,
-    sendSignedTransaction,
-    getState
+    getState,
+    notify
   }
 
   getState().then(state => {
@@ -410,11 +410,6 @@ function init(config) {
       configureWeb3()
     }
 
-    // // if user is on mobile, and mobile is allowed by Dapp just put the transaction through
-    // if (state.mobileDevice && !state.config.mobileBlocked) {
-    //   return state.web3Instance.eth.sendTransaction(txObject, callback)
-    // }
-
     const sendMethod = state.legacyWeb3
       ? promisify(state.web3Instance.eth.sendTransaction)
       : state.web3Instance.eth.sendTransaction
@@ -427,39 +422,6 @@ function init(config) {
       inlineCustomMsgs
     )
   }
-}
-
-function sendSignedTransaction(signedData, callback, inlineCustomMsgs) {
-  if (!state.validApiKey) {
-    const errorObj = new Error('Your api key is not valid')
-    errorObj.eventCode = 'initFail'
-
-    throw errorObj
-  }
-
-  if (!state.supportedNetwork) {
-    const errorObj = new Error('This network is not supported')
-    errorObj.eventCode = 'initFail'
-
-    throw errorObj
-  }
-
-  // Check if we have an instance of web3
-  if (!state.web3Instance) {
-    configureWeb3()
-  }
-
-  const sendMethod = state.legacyWeb3
-    ? promisify(state.web3Instance.eth.sendSignedTransaction)
-    : state.web3Instance.eth.sendSignedTransaction
-
-  return sendTransaction(
-    'activeTransaction',
-    signedData,
-    sendMethod,
-    callback,
-    inlineCustomMsgs
-  )
 }
 
 // GETSTATE FUNCTION //

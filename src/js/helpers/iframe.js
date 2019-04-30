@@ -1,9 +1,9 @@
 import { positionElement } from 'js/views/dom'
+
+import assistStyles from 'css/styles.css'
+import mediaQueries from 'css/media-queries.css'
 import darkModeStyles from 'css/dark-mode.css'
 
-import assistStyles from '../../css/styles.css'
-import mediaQueries from '../../css/media-queries.css'
-import darkModeStyles from '../../css/dark-mode.css'
 import { updateState, state } from './state'
 
 export function createIframe(browserDocument, style = {}) {
