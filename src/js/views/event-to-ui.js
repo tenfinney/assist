@@ -1,5 +1,14 @@
-import { state } from '../helpers/state'
-import { getItem } from '../helpers/storage'
+import { state } from 'js/helpers/state'
+import { getItem } from 'js/helpers/storage'
+import { showIframe } from 'js/helpers/iframe'
+import {
+  formatTime,
+  eventCodeToStep,
+  eventCodeToType,
+  timeouts,
+  assistLog
+} from 'js/helpers/utilities'
+
 import {
   openModal,
   createElement,
@@ -21,17 +30,7 @@ import {
   handleTouchMove,
   handleTouchEnd
 } from './dom'
-
-import { showIframe } from '../helpers/iframe'
-
 import { transactionMsgs } from './content'
-import {
-  formatTime,
-  eventCodeToStep,
-  eventCodeToType,
-  timeouts,
-  assistLog
-} from '../helpers/utilities'
 
 const eventToUI = {
   initialize: {
@@ -72,7 +71,8 @@ const eventToUI = {
     txConfirmedClient: notificationsUI,
     txStall: notificationsUI,
     txFailed: notificationsUI,
-    txSpeedUp: notificationsUI
+    txSpeedUp: notificationsUI,
+    txCancel: notificationsUI
   },
   activeContract: {
     txAwaitingApproval: notificationsUI,
@@ -85,7 +85,8 @@ const eventToUI = {
     txConfirmedClient: notificationsUI,
     txStall: notificationsUI,
     txFailed: notificationsUI,
-    txSpeedUp: notificationsUI
+    txSpeedUp: notificationsUI,
+    txCancel: notificationsUI
   }
 }
 
@@ -164,6 +165,9 @@ function notificationsUI({
   inlineCustomMsgs,
   eventCode
 }) {
+  // treat txConfirmedClient as txConfirm
+  if (eventCode === 'txConfirmedClient') eventCode = 'txConfirmed'
+
   const { id, startTime } = transaction
   const type = eventCodeToType(eventCode)
   const timeStamp = formatTime(Date.now())
