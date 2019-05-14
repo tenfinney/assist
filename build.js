@@ -37,13 +37,13 @@ const defaultPlugins = [
 ]
 
 const inputOptions = min => ({
-  input: 'src/js/index.js',
+  input: 'src/index.js',
   plugins: min ? [...defaultPlugins, uglify()] : defaultPlugins
 })
 
 const outputOptions = min => ({
   format: 'umd',
-  file: min ? 'lib/assist.min.js' : 'lib/assist.js',
+  file: min ? 'build/assist.min.js' : 'build/assist.js',
   name: 'assist',
   globals: {
     bluebird: 'promisify',

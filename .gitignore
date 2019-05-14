@@ -1,6 +1,4 @@
+/build
 /node_modules
-/multidep_modules
 .DS_Store
-/lib/assist.min.js
-/lib/assist.js
 .vscode/
